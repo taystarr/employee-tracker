@@ -4,6 +4,7 @@ CREATE DATABASE employee_track;
 
 USE employee_track;
 
+
 CREATE TABLE department (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(30) NOT NULL

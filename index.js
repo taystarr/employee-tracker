@@ -34,7 +34,7 @@ const promptUser = () => {
                 break;
 
             case 'View all roles':
-                // function here
+                viewRoles();
                 break;
 
             case 'View all employees':
@@ -71,6 +71,22 @@ const viewDepartments = () => {
         if (err) throw err;
         console.table(res);
         promptUser();
+    });
+};
+
+const viewRoles = () => {
+    db.query(`SELECT title AS Title, 
+            department.name AS Department, 
+            salary AS Salary 
+            FROM role 
+            INNER JOIN department 
+            ON role.department_id = department.id
+           `, 
+            (err, res) => {
+              if (err) throw err;
+              console.table(res);
+              // return to role section
+              promptUser();
     });
 };
 
