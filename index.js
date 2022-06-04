@@ -30,7 +30,7 @@ const promptUser = () => {
     .then((choice) => {
         switch (choice.start) {
             case 'View all departments':
-                // function here
+                viewDepartments();
                 break;
 
             case 'View all roles':
@@ -61,6 +61,16 @@ const promptUser = () => {
                 db.end();
 
         };
+    });
+};
+
+const viewDepartments = () => {
+    const sql = `SELECT name AS Departments FROM department`;
+
+    db.query(sql, (err, res) => {
+        if (err) throw err;
+        console.table(res);
+        promptUser();
     });
 };
 
