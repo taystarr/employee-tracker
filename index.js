@@ -42,7 +42,7 @@ const promptUser = () => {
                 break;
 
             case 'Add a department':
-                // function here
+                addDepartment();
                 break;
 
             case 'Add a role':
@@ -58,6 +58,13 @@ const promptUser = () => {
                 break;    
 
             case 'Exit Employee Tracker':
+                console.log(
+                    `
+                    ------------------------------------
+                    Thank you for using Employee Tracker
+                    ------------------------------------
+                    `
+                );
                 db.end();
 
         };
@@ -65,7 +72,8 @@ const promptUser = () => {
 };
 
 const viewDepartments = () => {
-    const sql = `SELECT name AS Departments FROM department`;
+    const sql = `SELECT id AS ID,
+                name AS Departments FROM department`;
 
     db.query(sql, (err, res) => {
         if (err) throw err;
@@ -74,8 +82,36 @@ const viewDepartments = () => {
     });
 };
 
+const addDepartment = () => {
+    inquirer.prompt([
+        {
+            type: 'input',
+            name: 'depAdd',
+            message: 'Please enter a new department to add.',
+            validate: depAdd => {
+                if (depAdd) {
+                    return true;
+                } else {
+                    console.log('Please enter new department');
+                    return false;
+                }
+            }
+        }
+    ])
+    .then((answer) => {
+        db.query(`INSERT INTO department SET ?`,
+        { name: answer.depAdd },
+        (err, res) => {
+            if (err) throw err;
+            console.log('Departments updated');
+            viewDepartments();
+        })
+    });
+};
+
 const viewRoles = () => {
-    db.query(`SELECT title AS Title, 
+    db.query(`SELECT role.id AS ID,
+            title AS Title, 
             department.name AS Department, 
             salary AS Salary 
             FROM role 
@@ -91,7 +127,8 @@ const viewRoles = () => {
 };
 
 const viewEmployees = () => {
-    db.query(`SELECT CONCAT (employee.first_name, " ", employee.last_name) AS Name, 
+    db.query(`SELECT employee.id AS ID,
+            CONCAT (employee.first_name, " ", employee.last_name) AS Name, 
             role.title AS Title, 
             department.name AS Department,
             role.salary as Salary, 
@@ -106,7 +143,6 @@ const viewEmployees = () => {
                 console.table(res);
                 // return to role section
                 promptUser();
-              
     });
 };
 
