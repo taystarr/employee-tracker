@@ -46,7 +46,7 @@ const promptUser = () => {
                 break;
 
             case 'Add a role':
-                // function here
+                addRole();
                 break;
 
             case 'Add an employee':
@@ -87,7 +87,7 @@ const addDepartment = () => {
         {
             type: 'input',
             name: 'depAdd',
-            message: 'Please enter a new department to add.',
+            message: 'Please enter a department to add.',
             validate: depAdd => {
                 if (depAdd) {
                     return true;
@@ -123,6 +123,73 @@ const viewRoles = () => {
               console.table(res);
               // return to role section
               promptUser();
+    });
+};
+
+const addRole = () => {
+    let departments = [];
+
+    const depChoose = `SELECT name FROM department`;
+    db.query(depChoose, (err, res) => {
+        for (var i = 0; i < res.length; i++) {
+            departments.push(res[i]);
+        }
+    });
+
+    return inquirer.prompt([
+        {
+            type: 'input',
+            name: 'roleAdd',
+            message: 'What role would you like to add?',
+            validate: roleAdd => {
+                if (roleAdd) {
+                    return true;
+                } else {
+                    console.log('Please enter new role');
+                    return false;
+                }
+            }
+        },
+        {
+            type: 'input',
+            name: 'salaryAdd',
+            message: 'What is the salary for this role?',
+            validate: addSalary => {
+                if (isNaN(addSalary)) {
+                    return 'Please enter a salary for this role';
+                } else {
+                    return true;
+                }
+            }
+        },
+        {
+            type: 'list',
+            name: 'dept',
+            message: 'Which department does this role belong to?',
+            choices: departments
+        }
+    ])
+    .then(answer => {
+        let depName = answer.dept;
+        let selectDepId = `SELECT id FROM department WHERE name = '${depName}'`;
+
+        db.query(selectDepId, (err, res) => {
+            let depId = res[0].id;
+            if (err) throw err;
+
+            db.query(`INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`,
+            [
+                answer.roleAdd,
+                answer.salaryAdd,
+                depId
+            ],
+            (err, res) => {
+                if (err) throw err;
+                console.log(`New role created`);
+                viewRoles();
+            }
+            )
+        });
     });
 };
 
