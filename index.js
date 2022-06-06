@@ -50,7 +50,7 @@ const promptUser = () => {
                 break;
 
             case 'Add an employee':
-                // function here
+                addEmployee();
                 break;  
                 
             case 'Update employee role':
@@ -78,6 +78,7 @@ const viewDepartments = () => {
     db.query(sql, (err, res) => {
         if (err) throw err;
         console.table(res);
+        // return to start screen
         promptUser();
     });
 };
@@ -104,6 +105,7 @@ const addDepartment = () => {
         (err, res) => {
             if (err) throw err;
             console.log('Departments updated');
+            // return to view updated departments
             viewDepartments();
         })
     });
@@ -121,7 +123,7 @@ const viewRoles = () => {
             (err, res) => {
               if (err) throw err;
               console.table(res);
-              // return to role section
+              // return to start screen
               promptUser();
     });
 };
@@ -186,6 +188,7 @@ const addRole = () => {
             (err, res) => {
                 if (err) throw err;
                 console.log(`New role created`);
+                // return to view updated roles
                 viewRoles();
             }
             )
@@ -208,8 +211,103 @@ const viewEmployees = () => {
             (err, res) => {
                 if (err) throw err;
                 console.table(res);
-                // return to role section
+                // return to start screen
                 promptUser();
+    });
+};
+
+const addEmployee = () => {
+    let managers = ['None'];
+    let allManagers = [];
+    let roles = [];
+
+    // loop through roles to push title options
+    let addRole = `SELECT title FROM role`;
+    db.query(addRole, (err, res) => {
+        for (var i = 0; i < res.length; i++) {
+            roles.push(res[i].title)
+        }
+    });
+
+    // loop through managers to push full_name options
+    let addManager = `SELECT id, CONCAT(first_name, " ", last_name) AS full_name
+    FROM employee WHERE manager_id is NULL`;
+    db.query(addManager, (err, res) => {
+        for (var i = 0; i < res.length; i++) {
+            managers.push(res[i].full_name);
+            allManagers.push(res[i]);
+        }
+    });
+
+    // first name, last name, role, manager
+    inquirer.prompt([
+        {
+            type: 'input',
+            name: 'firstName',
+            message: "What is the new employee's first name?",
+            validate: addFirst => {
+                if (addFirst) {
+                    return true;
+                } else {
+                    console.log("Please enter the employee's first name");
+                    return false;
+                }
+            }
+        },
+        {
+            type: 'input',
+            name: 'lastName',
+            message: "What is the new employee's last name?",
+            validate: addLast => {
+                if (addLast) {
+                    return true;
+                } else {
+                    console.log("Please enter the employee's last name");
+                    return false;
+                }
+            }
+        },
+        {
+            type: 'list',
+            name: 'empRole',
+            message: "What is the new employee's role?",
+            choices: roles
+        },
+        {
+            type: 'list',
+            name: 'empManager',
+            message: "Who is this employee's new manager?",
+            choices: managers
+        }
+    ])
+    .then((answers) => {
+        allManagers.forEach((manager) => {
+            if (manager.full_name === answers.empManager) {
+                answers.empManager = manager.id;
+            } else if (answers.empManager === 'None') {
+                answers.empManager = null;
+            }
+        });
+
+        db.query(`SELECT id FROM role WHERE title = '${answers.empRole}'`,
+        (err, res) => {
+            if (err) throw err;
+            let roleId = res[0].id;
+
+            db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`,
+            [
+                answers.firstName,
+                answers.lastName,
+                roleId,
+                answers.empManager
+            ],
+            (err, res) => {
+                if (err) throw err;
+                console.log(`Employee added`);
+                // return to view employees
+                viewEmployees();
+            });
+        });
     });
 };
 
