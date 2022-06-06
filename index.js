@@ -54,7 +54,7 @@ const promptUser = () => {
                 break;  
                 
             case 'Update employee role':
-                // function here
+                updateEmployee();
                 break;    
 
             case 'Exit Employee Tracker':
@@ -307,6 +307,68 @@ const addEmployee = () => {
                 // return to view employees
                 viewEmployees();
             });
+        });
+    });
+};
+
+const updateEmployee = () => {
+    let empName = [];
+    let allEmps = [];
+    let roleTitle = [];
+    let allRoles = [];
+
+    const getEmp = `SELECT id, CONCAT(first_name, " ", last_name) AS full_name FROM employee`;
+    db.query(getEmp, (err, res) => {
+        if (err) throw err;
+        for (var i = 0; i < res.length; i++) {
+            empName.push(res[i].full_name);
+            allEmps.push(res[i]);
+        }
+        db.query(`SELECT id, title FROM role`, (err, res) => {
+            for (var i = 0; i < res.length; i++) {
+                roleTitle.push(res[i].title);
+                allRoles.push(res[i]);
+            }
+        });
+
+        return inquirer.prompt([
+            {
+                type: 'list',
+                name: 'empName',
+                message: "Which employee's role would you like to update?",
+                choices: empName
+            },
+            {
+                type: 'list',
+                name: 'roleTitle',
+                message: "What is this employee's new role?",
+                choices: roleTitle
+            }
+        ])
+        .then((answers) => {
+            allEmps.forEach((employee) => {
+                if (employee.full_name === answers.empName) {
+                    answers.empName = employee.id;
+                }
+            });
+            allRoles.forEach((role) => {
+                if (role.title === answers.roleTitle) {
+                    answers.roleTitle = role.id;
+                }
+            });
+
+            const sql = `UPDATE employee SET role_id = ? WHERE id = ?`;
+            db.query(sql,
+                [
+                    answers.roleTitle,
+                    answers.empName
+                ],
+                (err, res) => {
+                    if (err) throw err;
+                    console.log(`Employee role has been updated`);
+                    // return to view updated employee
+                    viewEmployees();
+                });
         });
     });
 };
